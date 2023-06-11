@@ -11,6 +11,7 @@ import com.driver.repository.TripBookingRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
@@ -44,7 +45,40 @@ public class CustomerServiceImpl implements CustomerService {
 	public TripBooking bookTrip(int customerId, String fromLocation, String toLocation, int distanceInKm) throws Exception{
 		//Book the driver with lowest driverId who is free (cab available variable is Boolean.TRUE). If no driver is available, throw "No cab available!" exception
 		//Avoid using SQL query
-		return null;
+		List<Driver> driverList = driverRepository2.findAll();
+		Driver driver = null;
+		for(Driver drivers:driverList) {
+			if (drivers.getCab().getAvailable()) {
+				driver = drivers;
+				break;
+			}
+		}
+		if(Objects.isNull(driver))throw new Exception("No cab available!");
+		driver.getCab().setAvailable(Boolean.FALSE);
+		TripBooking tripBooking = new TripBooking();
+		Customer customer = customerRepository2.findById(customerId).get();
+		tripBooking.setCustomer(customer);
+		tripBooking.setFromLocation(fromLocation);
+		tripBooking.setToLocation(toLocation);
+		tripBooking.setDistanceInKm(distanceInKm);
+		tripBooking.setStatus(TripStatus.CONFIRMED);
+		tripBooking.setDriver(driver);
+		List<TripBooking> list1 = driver.getTripBookingList();
+		list1.add(tripBooking);
+		driver.setTripBookingList(list1);
+		List<TripBooking> list2 = customer.getTripBookingLists();
+
+		list2.add(tripBooking);
+		customer.setTripBookingLists(list2);
+		customerRepository2.save(customer);
+		driverRepository2.save(driver);
+		return tripBooking;
+
+
+
+
+
+
 
 	}
 
